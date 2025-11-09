@@ -1,0 +1,200 @@
+/* ------------------------------
+   General Layout
+------------------------------ */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f8f9fa;
+  color: #222;
+}
+
+.navbar {
+  background: #d97d27;
+  color: #fff;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar h2 {
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logout-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #0056b3;
+}
+
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ------------------------------
+   Create Section
+------------------------------ */
+.create-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.create-section input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.create-section button {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+
+.create-section button:hover {
+  background: #0056b3;
+}
+
+/* ------------------------------
+   Folder Cards
+------------------------------ */
+.folders-container {
+  display: grid;
+  gap: 15px;
+}
+
+.folder-card {
+  background: #fff9e6;
+  border: 1px solid #ffe58a;
+  padding: 15px;
+  border-radius: 10px;
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+.folder-card:hover {
+  transform: translateY(-2px);
+}
+
+.folder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.folder-header h3 {
+  font-size: 1.1rem;
+  color: #000;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Buttons inside cards */
+.btn-small {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: opacity 0.2s;
+}
+
+.btn-small:hover {
+  opacity: 0.8;
+}
+
+.btn-small.delete {
+  background: #ff4d4d;
+  color: white;
+}
+
+/* ------------------------------
+   Mobile Responsive Design
+------------------------------ */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .logout-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+  }
+
+  /* .container {
+    width: 95%;
+    padding: 15px;
+  } */
+
+  .create-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .create-section button {
+    width: 100%;
+  }
+
+  .folder-card {
+    padding: 12px;
+  }
+
+  .folder-header h3 {
+    font-size: 1rem;
+  }
+
+  .btn-small {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  .folder-header h3 {
+    font-size: 0.95rem;
+  }
+
+  .create-section input {
+    font-size: 0.9rem;
+  }
+
+  .logout-btn {
+    font-size: 0.9rem;
+  }
+}

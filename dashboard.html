@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Manager</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Minimal inline CSS for fixes */
+    body {
+      background: #fff;
+      color: #000;
+      font-family: Arial, sans-serif;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      background: #da7c39;
+      color: #fff;
+    }
+
+    .logout-btn {
+      background: #007BFF;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .create-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      font-size: medium;
+    }
+
+    input {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .folders-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+
+    .folder-card {
+      background: #fffbea;
+      border: 1px solid #f7e46d;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .folder-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .folder-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-small {
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .btn-small.delete {
+      color: red;
+    }
+
+    .upload-section {
+      margin: 20px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #uploadBtn.active {
+      background: #007BFF;
+      color: white;
+    }
+
+    #uploadBtn.inactive {
+      background: #ccc;
+      color: #555;
+    }
+
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .file-actions button {
+      margin-left: 8px;
+    }
+
+    /* ✅ Back button fixed styling */
+    .back-btn {
+      background: #007BFF;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 15px;
+      display: inline-block;
+    }
+
+    .back-btn:hover {
+      background: #0056b3;
+    }
+
+    h2.folder-title {
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="navbar">
+    <h2>📁 My Document Manager</h2>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="container">
+    <div class="create-section">
+      <input type="text" id="folderName" placeholder="Enter folder name">
+      <button onclick="createFolder()">+ Create Folder</button>
+      <!-- <input type="text" id="search" placeholder="Search folder..." onkeyup="searchFolders()"> -->
+    </div>
+
+    <div id="folders" class="folders-container"></div>
+  </div>
+
+  <script>
+    const userId = localStorage.getItem('userId');
+    if (!userId) window.location.href = 'index.html';
+
+    const API = 'http://localhost:5000';
+    let currentFolderId = localStorage.getItem('currentFolderId') || null;
+    let currentFolderName = localStorage.getItem('currentFolderName') || null;
+
+    async function loadFolders() {
+      try {
+        const res = await fetch(`${API}/api/folders/${userId}`);
+        const folders = await res.json();
+
+        const container = document.getElementById('folders');
+        if (!folders.length) {
+          container.innerHTML = '<p class="no-files">No folders yet</p>';
+          return;
+        }
+
+        container.innerHTML = folders.map(f => `
+        <div class="folder-card" onclick="openFolder('${f._id}', '${f.name}')">
+          <div class="folder-header">
+            <h3>📁 ${f.name}</h3>
+            <div>
+              <button class="btn-small" onclick="event.stopPropagation(); renameFolder('${f._id}')">✏️</button>
+              <button class="btn-small delete" onclick="event.stopPropagation(); deleteFolder('${f._id}')">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      } catch (err) {
+        console.error("Error loading folders:", err);
+      }
+    }
+
+    async function openFolder(folderId, folderName) {
+      currentFolderId = folderId;
+      currentFolderName = folderName;
+      localStorage.setItem('currentFolderId', folderId);
+      localStorage.setItem('currentFolderName', folderName);
+
+      const res = await fetch(`${API}/api/folders/${userId}`);
+      const folders = await res.json();
+      const folder = folders.find(f => f._id === folderId);
+      if (!folder) return alert("Folder not found");
+
+      document.querySelector(".container").innerHTML = `
+        <button class="back-btn" onclick="goBack()">⬅ Back</button>
+        <h2 class="folder-title">📁 ${folderName}</h2>
+
+        <div class="upload-section">
+          <input type="file" id="fileInput" onchange="toggleUploadButton()" />
+          <button id="uploadBtn" class="inactive" onclick="uploadFile()">Upload</button>
+        </div>
+
+        <div class="file-list">
+          ${folder.files.length === 0
+          ? "<p class='no-files'>No files in this folder.</p>"
+          : folder.files.map(file => `
+              <div class="file-item">
+                <a href="${API}/uploads/${file.filename}" target="_blank">${file.originalName}</a>
+                <div class="file-actions">
+                  <button class="btn-small" onclick="renameFile('${folder._id}','${file._id}','${file.originalName}')">✏️</button>
+                  <button class="btn-small delete" onclick="deleteFile('${folder._id}','${file._id}')">🗑️</button>
+                </div>
+              </div>
+            `).join('')}
+        </div>
+      `;
+    }
+
+    async function createFolder() {
+      const name = document.getElementById('folderName').value.trim();
+      if (!name) return alert('Enter a folder name!');
+      await fetch(`${API}/api/folders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, userId })
+      });
+      document.getElementById('folderName').value = '';
+      loadFolders();
+    }
+
+    async function uploadFile() {
+      const folderId = localStorage.getItem('currentFolderId');
+      const folderName = localStorage.getItem('currentFolderName');
+      const input = document.getElementById('fileInput');
+      if (!input.files.length) return alert('Please select a file');
+
+      const formData = new FormData();
+      formData.append('file', input.files[0]);
+
+      await fetch(`${API}/api/files/${folderId}`, {
+        method: 'POST',
+        body: formData
+      });
+
+      openFolder(folderId, folderName);
+    }
+
+    function toggleUploadButton() {
+      const input = document.getElementById('fileInput');
+      const btn = document.getElementById('uploadBtn');
+      if (input.files.length > 0) {
+        btn.classList.add('active');
+        btn.classList.remove('inactive');
+      } else {
+        btn.classList.remove('active');
+        btn.classList.add('inactive');
+      }
+    }
+
+    async function deleteFile(folderId, fileId) {
+      if (!confirm('Delete this file?')) return;
+      await fetch(`${API}/api/files/${folderId}/${fileId}`, { method: 'DELETE' });
+      openFolder(folderId, localStorage.getItem('currentFolderName'));
+    }
+
+    async function renameFile(folderId, fileId, oldName) {
+      const newName = prompt('Enter new file name:', oldName);
+      if (!newName || newName.trim() === '') return;
+
+      await fetch(`${API}/api/files/${folderId}/${fileId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newName })
+      });
+
+      openFolder(folderId, localStorage.getItem('currentFolderName'));
+    }
+
+    async function renameFolder(id) {
+      const newName = prompt('Enter new folder name:');
+      if (!newName) return;
+      await fetch(`${API}/api/folders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName })
+      });
+      loadFolders();
+    }
+
+    async function deleteFolder(id) {
+      if (!confirm('Delete this folder and all files?')) return;
+      await fetch(`${API}/api/folders/${id}`, { method: 'DELETE' });
+      loadFolders();
+    }
+
+    async function searchFolders() {
+      const query = document.getElementById('search').value;
+      if (query.trim() === '') return loadFolders();
+
+      const res = await fetch(`${API}/api/folders/search/${userId}?query=${query}`);
+      const folders = await res.json();
+
+      document.getElementById('folders').innerHTML = folders.map(f => `
+        <div class="folder-card" onclick="openFolder('${f._id}', '${f.name}')">
+          <h3>📁 ${f.name}</h3>
+        </div>
+      `).join('');
+    }
+
+    function logout() {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('currentFolderId');
+      localStorage.removeItem('currentFolderName');
+      window.location.href = 'index.html';
+    }
+
+    function goBack() {
+      localStorage.removeItem('currentFolderId');
+      localStorage.removeItem('currentFolderName');
+      document.querySelector('.container').innerHTML = `
+        <div class="create-section">
+          <input type="text" id="folderName" placeholder="Enter folder name">
+          <button onclick="createFolder()">+ Create Folder</button>
+        //   <input type="text" id="search" placeholder="Search folder..." onkeyup="searchFolders()">
+        </div>
+        <div id="folders" class="folders-container"></div>
+      `;
+      loadFolders();
+    }
+
+    if (currentFolderId && currentFolderName) {
+      openFolder(currentFolderId, currentFolderName);
+    } else {
+      loadFolders();
+    }
+  </script>
+</body>
+</html>
